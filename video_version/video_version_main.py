@@ -1,6 +1,6 @@
 import cv2 as cv
 import numpy as np
-import math
+from ocr import *
 
 # def is_rectangle(approx, angle_tolerance=10):
 #     if len(approx) < 4:
@@ -22,7 +22,7 @@ import math
 #     return all(abs(a - 90) < angle_tolerance for a in angles)
 
 # Video laden
-cap = cv.VideoCapture("test.mov")
+cap = cv.VideoCapture("test.mp4")
 if not cap.isOpened():
     print("Video konnte nicht geöffnet werden.")
     exit()
@@ -69,6 +69,9 @@ while True:
             cv.rectangle(rect_img, (x, y), (x + w, y + h), (0, 0, 255), 3)
             plate_image = frame[y:y + h, x:x + w]
             cv.imshow("Kennzeichen", plate_image)
+            text = process_ocr(plate_image)
+            print("Kennzeichen:", text)
+
 
     # Anzeigen
     cv.imshow("Kanten geschlossen", closed)
