@@ -1,7 +1,7 @@
 import os
 
 # remove comment and add path to images and labels with .txt files
-# folder_path = "../label-stefan-kz"
+folder_path = "/Users/kresovic/Documents/Uni/Master/2.Semester/Bild/Model_test/data/labels"
 
 
 for filename in os.listdir(folder_path):
