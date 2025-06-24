@@ -52,6 +52,25 @@ blurred = cv.GaussianBlur(grayscale_img, (3, 3), 0)
 - Je größer das sigma, desto stärker wird das Bild verwischt.
 - Je kleiner das sigma, nur nahe Pixel haben Einfluss --> Glättung ist lokal und schwach. Details bleiben eher erhalten.
 
+## Adaptisches Thresholding
+thresh = cv.adaptiveThreshold(grayscale_img, 255,
+                            cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+                            cv.THRESH_BINARY, 11, 2)
+
+- Ein Graustufenbild, in dem jeder Punkt (Pixel) einen Wert zwischen 0 (schwarz) und 255 (weiß) hat. Bei der Schwellenwertsetzung wird entschieden, ab welchem Wert ein Pixel weiß oder schwarz sein soll. Das Bild wird vereinfacht und bestimmte Bereiche hervorgehoben.
+- Für jeden kleinen Bereich (Pixel) im Bild wird ein eigener Schwellenwert berechnet, da ein Bild unterschiedliche Helligkeiten in verschiedenen Bereichen besitzen kann.
+- Der Schwellenwert wird anhand des Bereiches um das Pixel herum berechnet, dadurch erhalten wir unterschiedliche Schwellenwerte für verschiedene Bereiche desselben Bildes.
+- Parameter:
+    - Eingabebild
+    - Max_value: Welchen Wert die Pixel maximal annehmen, wenn der Schwellenwert überschritten wird
+    - Adaptive_method:
+        - cv.ADAPTIVE_THRESH_MEAN_C: Der Schwellenwert ist der Mittelwert des Nachbarschaftsbereichs abzüglich der Konstanten C
+        - cv.ADAPTIVE_THRESH_GAUSSIAN_C: Der Schwellenwert ist eine gaußverteilte gewichtete Summe der Nachbarschaftswerte abzüglich der Konstanten C
+    - Type_of_threshold: Was passiert mit dem Pixelwert, wenn der Schwellenwert berechnet wurde
+        - Thresh_Binary: Wandelt ein Graustufenbild in ein Schwarz-Weiß-Bild um, basierend auf einem Schwellwert (threshold)
+    - Block_size: Die Größe des Bereichs (Kernels), indem der Schwellenwert berechnet wird, um dem Pixel herum
+    - Konstante: Nach der Berechnung des lokalen Durchschnitts (oder gewichteten Durchschnitts), wird C davon abgezogen. Das sorgt dafür, dass du den Schwellwert feiner anpassen kannst – z. B. kannst du damit Rauschen besser unterdrücken oder schwache Kanten hervorheben.
+
 ## Kantenerkennung
 edges = cv.Canny(grayscale_img, 100, 200)
 
