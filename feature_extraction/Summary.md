@@ -79,3 +79,37 @@ edges = cv.Canny(grayscale_img, 100, 200)
     Obere Grenze = 100, untere Grenze = 50 --> Alles was unterhalb der unteren Grenze ist verwerfen. Alles was oberhalb der oberen Grenze ist, ist sicher eine Kante. Alles was dazwischen ist, sind mögliche Kanten, diese nur behalten, wenn sie mit starken Kanten verbunden sind, ansonsten werden diese rausgeschmissen. In dieser Phase werden auch kleine Pixelstörungen entfernt, da davon ausgegangen wird, dass es sich bei den Kanten um lange Linien handelt.
     ![Alt text](https://docs.opencv.org/4.x/hysteresis.jpg)
     --> Bildbeschreibung: The edge A is above the maxVal, so considered as "sure-edge". Although edge C is below maxVal, it is connected to edge A, so that also considered as valid edge and we get that full curve. But edge B, although it is above minVal and is in same region as that of edge C, it is not connected to any "sure-edge", so that is discarded. So it is very important that we have to select minVal and maxVal accordingly to get the correct result.
+
+## Konturen
+contours, _ = cv.findContours(edges.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+- Eine Kontur ist eine zusammenhängende Linie, die die Grenze eines Objekts im Bild beschreibt (Grenzen einer Form mit gleicher Intensität).
+- Konturen sind eine Liste in Python. Jede Kontur ist ein NumPy Array und beinhaltet die (x, y)- Koordinaten der Randpunkte eines Objekts
+- Man kann alle Konturen auf ein Bild zeichnen (-1 setzen):
+    cv.drawContours(img, contours, -1, (0,255,0), 3)
+- Man kann aber auch bestimmte Konturen zeichnen (4 Kontur auswählen):
+    cv.drawContours(img, contours, 3, (0,255,0), 3)
+- Parameter:
+    1. Eingabebild
+    2. Contour Hierarchy: Manchmal Formen an unterschiedlicher Position, manchmal aber auch Formen innerhalb von anderen Formen. Die äußere Form ist das übergeordnete Element und die innere Form das untergeordnete Element. So entstehen Beziehungen zueinander.
+    ![Alt text](https://docs.opencv.org/4.x/hierarchy.png)
+    Hierarchien werden in einem Array gespeichert mit 4 Einträgen: [Next, Previous, First_Child, Parent]
+    Next: die nächste Kontur auf derselben hierarchischen Ebene
+    Previous: die vorherige Kontur auf derselben hierarchischen Ebene
+    First_Child: bezeichnet die erste untergeordnete Kontur
+    Parent: bezeichnet den Index der übergeordneten Kontur
+    --> Es folgen die möglichen Konturabrufmodi:
+    - Retr_List: Alle Konturen werden abgerufen und alle haben gleiche Hierarchie (d.h. keine Parent-Child Beziehung) --> Im Array: First_Child = Parent = -1
+    - Retr_External: Nur Außenkonturen bleiben bestehen, innere werden unterdrückt
+    - Retr_Ccomp:Findet nur zwei Ebenen von Hierarchie: äußere und innere Konturen
+    - Retr_Tree: Findet alle Konturen UND erstellt eine vollständige Hierarchie (inkl. verschachtelter Konturen)
+    3. Contour Approximation Method: Wie werden die Konturen vereinfacht?
+        CHAIN_APPROX_NONE: Speichert alle Punkte der Kontur (Speicherintensiv)
+        CHAIN_APPROX_SIMPLE: Spart Speicher, indem unnötige Punkte entfernt werden
+        ![Alt text](https://docs.opencv.org/4.x/none.jpg)
+
+contours = sorted(contours, key=cv.contourArea, reverse=True)
+- Sie sortiert die gefundenen Konturen nach ihrer Fläche – von groß nach klein.
+    - Sorted: Python-Funktion, um Liste zu sortieren
+    - key=cv.contourArea: Wählt Kontur & berechnet Fläche (OpenCV verwendet dazu die Anzahl der Pixel, die innerhalb der Kontur liegen)
+    - reverse=True: Normalerweise sortiert sorted() von klein nach groß, mit reverse = True --> groß nach klein
