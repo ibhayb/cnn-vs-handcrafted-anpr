@@ -130,5 +130,28 @@ contours, _ = cv.findContours(edges.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
 contours = sorted(contours, key=cv.contourArea, reverse=True)
 - Sie sortiert die gefundenen Konturen nach ihrer Fläche – von groß nach klein.
     - Sorted: Python-Funktion, um Liste zu sortieren
-    - key=cv.contourArea: Wählt Kontur & berechnet Fläche (OpenCV verwendet dazu die Anzahl der Pixel, die innerhalb der Kontur liegen)
+    - key=cv.contourArea: Wählt Kontur & berechnet Fläche (OpenCV verwendet dazu die Anzahl der Pixel, die innerhalb der Kontur liegen) --> berechnet mit Green's Theorem (Shoelace Rule)
     - reverse=True: Normalerweise sortiert sorted() von klein nach groß, mit reverse = True --> groß nach klein
+
+## Verschiedenes
+- ArcLength: cv.arcLength(contour, True)
+    - Berechnet den euklidischen Umfang einer Kontur
+    - √[(x2−x1)² + (y2−y1)²]
+- Epsilon: epsilon = 0.02 * cv.arcLength(contour, True)
+    - Wird meistens in Zusammenhang mit cv.approxPolyDP() verwendet, um eine Kontur zu vereinfachen
+    - Z.B.: Kreis kann aus hunderten von Punkten bestehen --> approx. mit 8 Punkten
+    - Epsilon = Toleranzwert, gibt an, wie weit die approximierte Kontur von der Originalkontur abweichen darf, gemessen in Pixeln --> 0.02 = 2% Abweichung (Wie stark darf der neue Umriss von der alten Kontur abweichen?)
+    - Je größer Epsilon, desto stärker wird die Kontur vereinfacht (weniger Punkte, gröbere Form)
+    - Wie soll die Kontur betrachtet werden: True --> geschlossen, False --> offen (letzter Punkt nicht mit dem ersten Verbunden)
+- Form approx.:
+    - approx = cv.approxPolyDP(contour, epsilon, True)
+    - Eine gegebene Kontur wird in eine andere Kontur approx. mit geringerer Anzahl an Punkten
+    - Ramer–Douglas–Peucker Algorithmus wird für die Vereinfachung verwendet
+    - Damit kann man Formen erkennen bzw. filtern z.B. if len(approx) == 4 --> Rechteck
+    - ![Alt text](https://docs.opencv.org/4.x/approx.jpg)
+- BoundingRect:
+    - x, y, w, h = cv.boundingRect(approx)
+    - Liefert das kleinste aufrechte Rechteck, das die gegebene Kontur vollständig enthält
+    - Aufrecht bedeutet, dass das Rechteck nicht gedreht ist und somit immer Achsenparallel
+    - Bsp.: Kontur: [[30,40], [80,90], [60,50], [40,70]] --> Nehme min(x), max(y) --> Rechteck
+    - Damit kann man z.B. Objekte einrahmen, verfolgen, ausschneiden, größe und position bestimmen
