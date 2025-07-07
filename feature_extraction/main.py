@@ -4,6 +4,30 @@ import os
 import easyocr
 import re
 
+def show_traffic_light(is_allowed: bool):
+    # Erstelle leeres schwarzes Bild
+    light = np.zeros((200, 100, 3), dtype=np.uint8)
+
+    # Farben definieren
+    red_on = (0, 0, 255)
+    yellow_on = (0, 255, 255)
+    green_on = (0, 255, 0)
+    off = (50, 50, 50)
+
+    # Ampellogik:
+    if is_allowed:
+        colors = [off, off, green_on]  # nur grün leuchtet
+    else:
+        colors = [red_on, off, off]    # nur rot leuchtet
+
+    # Kreise zeichnen (oben: rot, mitte: gelb, unten: grün)
+    positions = [(50, 40), (50, 100), (50, 160)]
+    for pos, color in zip(positions, colors):
+        cv.circle(light, pos, 20, color, -1)
+
+    # Fenster anzeigen
+    cv.imshow("Traffic Light", light)
+
 def is_likely_plate(text):
     cleaned = ''.join(filter(str.isalnum, text.upper()))
     return bool(re.match(r'^[A-ZÄÖÜ]{1,3}[A-Z]{1,2}[1-9][0-9]{0,3}[HE]?$', cleaned))
@@ -29,6 +53,7 @@ def preprocess_plate(plate_img):
 
 image_dir = "../images"
 image_files = [f for f in os.listdir(image_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+white_listed_plates = ['FES2467', 'FES2761', ]
 
 reader = easyocr.Reader(['en'])
 
@@ -95,16 +120,16 @@ for filename in image_files:
     print(full_plate)
 
     plate_candidate = extract_plate(full_plate)
-    # if plate_candidate:
+
     print("✅ Erkanntes Kennzeichen:", plate_candidate)
     for (bbox, text) in texts:
         pts = [tuple(map(int, point)) for point in bbox]
         cv.polylines(plate_image, [np.array(pts)], isClosed=True, color=(0, 255, 0), thickness=2)
         cv.putText(plate_image, text, pts[0], cv.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
-    # else:
-    #     print("⛔ Kein valides Kennzeichen erkannt.")
-
-    # Anzeigen
+    if plate_candidate in white_listed_plates:
+        show_traffic_light(True)
+    else:
+        show_traffic_light(False)
     cv.imshow('Original', img)
     cv.imshow('Detected Plate + OCR', plate_image)
 
