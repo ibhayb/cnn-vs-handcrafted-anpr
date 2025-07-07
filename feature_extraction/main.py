@@ -8,10 +8,18 @@ def is_likely_plate(text):
     cleaned = ''.join(filter(str.isalnum, text.upper()))
     return bool(re.match(r'^[A-ZÄÖÜ]{1,3}[A-Z]{1,2}[1-9][0-9]{0,3}[HE]?$', cleaned))
 
+def extract_plate(text):
+    cleaned = ''.join(filter(str.isalnum, text.upper()))
+    matches = re.findall(r'[A-ZÄÖÜ]{1,3}[A-Z]{1,2}[1-9][0-9]{0,3}[HE]?$', cleaned)
+    return matches[0] if matches else None
+
 def box_area(bbox):
     x0, y0 = bbox[0]
     x2, y2 = bbox[2]
     return abs((x2 - x0) * (y2 - y0))
+
+def box_height(bbox):
+    return abs(bbox[2][1] - bbox[0][1])
 
 def preprocess_plate(plate_img):
     gray = cv.cvtColor(plate_img, cv.COLOR_BGR2GRAY)
@@ -55,14 +63,25 @@ for filename in image_files:
         plate_image = img.copy()
 
     # 🔧 Preprocessing nur auf das gecroppte Kennzeichen anwenden
-    plate_for_ocr = preprocess_plate(plate_image)
+    # plate_for_ocr = preprocess_plate(plate_image)
 
     # OCR auf dem vorbereiteten Ausschnitt
-    results = reader.readtext(plate_for_ocr)
+    results = reader.readtext(plate_image)
 
-    # Filter zu kleine Boxen (z.B. Sticker, Logos)
-    MIN_AREA = 1000
-    filtered = [(bbox, text, prob) for (bbox, text, prob) in results if box_area(bbox) >= MIN_AREA]
+    heights = [box_height(bbox) for (bbox, _, _) in results]
+    if heights:
+        # Normiere die Höhen, um die Filterung zu ermöglichen
+        max_height = max(heights)
+
+        # Filter: Nur Boxen mit normierter Höhe ≥ 0.6
+        MIN_NORM_HEIGHT = 0.5
+        filtered = []
+        for (bbox, text, prob), h in zip(results, heights):
+            norm_height = h / max_height if max_height > 0 else 0
+            print(norm_height, text, prob)
+            if norm_height >= MIN_NORM_HEIGHT:
+                filtered.append((bbox, text, prob))
+
 
     texts = []
     for (bbox, text, prob) in filtered:
@@ -73,15 +92,17 @@ for filename in image_files:
     # Sortiere von links nach rechts
     texts = sorted(texts, key=lambda item: min(pt[0] for pt in item[0]))
     full_plate = ''.join([txt for _, txt in texts])
+    print(full_plate)
 
-    if is_likely_plate(full_plate):
-        print("✅ Erkanntes Kennzeichen:", full_plate)
-        for (bbox, text) in texts:
-            pts = [tuple(map(int, point)) for point in bbox]
-            cv.polylines(plate_image, [np.array(pts)], isClosed=True, color=(0, 255, 0), thickness=2)
-            cv.putText(plate_image, text, pts[0], cv.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
-    else:
-        print("⛔ Kein valides Kennzeichen erkannt.")
+    plate_candidate = extract_plate(full_plate)
+    # if plate_candidate:
+    print("✅ Erkanntes Kennzeichen:", plate_candidate)
+    for (bbox, text) in texts:
+        pts = [tuple(map(int, point)) for point in bbox]
+        cv.polylines(plate_image, [np.array(pts)], isClosed=True, color=(0, 255, 0), thickness=2)
+        cv.putText(plate_image, text, pts[0], cv.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+    # else:
+    #     print("⛔ Kein valides Kennzeichen erkannt.")
 
     # Anzeigen
     cv.imshow('Original', img)
