@@ -125,7 +125,9 @@ for filename in image_files:
     for (bbox, text) in texts:
         pts = [tuple(map(int, point)) for point in bbox]
         cv.polylines(plate_image, [np.array(pts)], isClosed=True, color=(0, 255, 0), thickness=2)
-        cv.putText(plate_image, text, pts[0], cv.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+        text_position = (pts[0][0], pts[0][1] + 30)
+        cv.putText(plate_image, text, text_position, cv.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 255), 2)
+
     if plate_candidate in white_listed_plates:
         show_traffic_light(True)
     else:
